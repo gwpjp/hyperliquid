@@ -4,40 +4,12 @@ import {
   type Subscription,
   TransportError,
 } from "../base.ts";
-import {
-  type MessageBufferStrategy,
-  ReconnectingWebSocket,
-  ReconnectingWebSocketError,
-  type ReconnectingWebSocketOptions,
-} from "./_reconnecting_websocket.ts";
 import { HyperliquidEventTarget } from "./_hyperliquid_event_target.ts";
 import { WebSocketAsyncRequest } from "./_websocket_async_request.ts";
+import { ReconnectingWebSocket } from "./_reconnecting_websocket.ts";
 
-export {
-  type MessageBufferStrategy,
-  ReconnectingWebSocketError,
-  type ReconnectingWebSocketOptions,
-};
-export {
-  ExternalWebSocketTransport,
-  type ExternalWebSocketTransportOptions,
-  ExternalWebSocketRequestError,
-} from "./external_websocket_transport.ts";
-
-/** Configuration options for the WebSocket transport layer. */
-export interface WebSocketTransportOptions {
-  /**
-   * The WebSocket URL.
-   * - Mainnet:
-   *   - API: `wss://api.hyperliquid.xyz/ws`
-   *   - Explorer: `wss://rpc.hyperliquid.xyz/ws`
-   * - Testnet:
-   *   - API: `wss://api.hyperliquid-testnet.xyz/ws`
-   *   - Explorer: `wss://rpc.hyperliquid-testnet.xyz/ws`
-   * @defaultValue `wss://api.hyperliquid.xyz/ws`
-   */
-  url?: string | URL;
-
+/** Configuration options for the external WebSocket transport layer. */
+export interface ExternalWebSocketTransportOptions {
   /**
    * Timeout for requests in ms.
    * Set to `null` to disable.
@@ -62,26 +34,24 @@ export interface WebSocketTransportOptions {
     timeout?: number | null;
   };
 
-  /** Reconnection policy configuration for closed connections. */
-  reconnect?: ReconnectingWebSocketOptions;
-
   /**
    * Enable automatic event resubscription after reconnection.
+   * Only applies to ReconnectingWebSocket instances.
    * @defaultValue `true`
    */
   autoResubscribe?: boolean;
 }
 
-/** Error thrown when a WebSocket request fails. */
-export class WebSocketRequestError extends TransportError {
+/** Error thrown when an external WebSocket request fails. */
+export class ExternalWebSocketRequestError extends TransportError {
   constructor(message?: string, options?: ErrorOptions) {
     super(message, options);
-    this.name = "WebSocketRequestError";
+    this.name = "ExternalWebSocketRequestError";
   }
 }
 
-/** WebSocket implementation of the REST and Subscription transport interfaces. */
-export class WebSocketTransport
+/** WebSocket implementation that accepts an external socket instance. */
+export class ExternalWebSocketTransport
   implements IRequestTransport, ISubscriptionTransport
 {
   protected _wsRequester: WebSocketAsyncRequest;
@@ -125,20 +95,29 @@ export class WebSocketTransport
   autoResubscribe: boolean;
 
   /** The WebSocket that is used for communication. */
-  readonly socket: ReconnectingWebSocket;
+  readonly socket: WebSocket | ReconnectingWebSocket;
 
   /**
-   * Creates a new WebSocket transport instance.
+   * Creates a new external WebSocket transport instance.
+   * @param socket - The WebSocket or ReconnectingWebSocket instance to use for communication.
    * @param options - Configuration options for the WebSocket transport layer.
    */
-  constructor(options?: WebSocketTransportOptions) {
-    this.socket = new ReconnectingWebSocket(
-      options?.url ?? "wss://api.hyperliquid.xyz/ws",
-      undefined,
-      options?.reconnect
-    );
+  constructor(
+    socket: WebSocket | ReconnectingWebSocket,
+    options?: ExternalWebSocketTransportOptions
+  ) {
+    this.socket = socket;
     this._hlEvents = new HyperliquidEventTarget(this.socket);
-    this._wsRequester = new WebSocketAsyncRequest(this.socket, this._hlEvents);
+
+    // Create a wrapper if we have a regular WebSocket to make it compatible with WebSocketAsyncRequest
+    const socketWrapper =
+      socket instanceof ReconnectingWebSocket
+        ? socket
+        : this._createWebSocketWrapper(socket);
+    this._wsRequester = new WebSocketAsyncRequest(
+      socketWrapper,
+      this._hlEvents
+    );
 
     this.timeout = options?.timeout === undefined ? 10_000 : options.timeout;
     this.keepAlive = {
@@ -175,7 +154,7 @@ export class WebSocketTransport
    * @param signal - An {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal}. If this option is set, the request can be canceled by calling {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/AbortController/abort | abort()} on the corresponding {@linkcode https://developer.mozilla.org/en-US/docs/Web/API/AbortController | AbortController}.
    * @returns A promise that resolves with parsed JSON response body.
    *
-   * @throws {WebSocketRequestError} - An error that occurs when a WebSocket request fails.
+   * @throws {ExternalWebSocketRequestError} - An error that occurs when a WebSocket request fails.
    */
   async request<T>(
     type: "info" | "exchange",
@@ -200,8 +179,8 @@ export class WebSocketTransport
         combinedSignal
       );
     } catch (error) {
-      if (error instanceof WebSocketRequestError) throw error; // Re-throw known errors
-      throw new WebSocketRequestError(
+      if (error instanceof ExternalWebSocketRequestError) throw error; // Re-throw known errors
+      throw new ExternalWebSocketRequestError(
         `Unknown error while making a WebSocket request: ${error}`,
         { cause: error }
       );
@@ -217,7 +196,7 @@ export class WebSocketTransport
    * @param listener - A function to call when the event is dispatched.
    * @returns A promise that resolves with a {@link Subscription} object to manage the subscription lifecycle.
    *
-   * @throws {WebSocketRequestError} - An error that occurs when a WebSocket request fails.
+   * @throws {ExternalWebSocketRequestError} - An error that occurs when a WebSocket request fails.
    */
   async subscribe<T>(
     channel: string,
@@ -263,13 +242,13 @@ export class WebSocketTransport
               this._subscriptions.delete(id);
 
               // If the socket is open, send unsubscription request
-              if (this.socket.readyState === ReconnectingWebSocket.OPEN) {
+              if (this.socket.readyState === WebSocket.OPEN) {
                 await this._wsRequester.request("unsubscribe", payload);
               }
             }
           } catch (error) {
-            if (error instanceof WebSocketRequestError) throw error; // Re-throw known errors
-            throw new WebSocketRequestError(
+            if (error instanceof ExternalWebSocketRequestError) throw error; // Re-throw known errors
+            throw new ExternalWebSocketRequestError(
               `Unknown error while unsubscribing from a WebSocket channel: ${error}`,
               { cause: error }
             );
@@ -290,8 +269,8 @@ export class WebSocketTransport
         resubscribeSignal: subscription.resubscribeAbortController?.signal,
       };
     } catch (error) {
-      if (error instanceof WebSocketRequestError) throw error; // Re-throw known errors
-      throw new WebSocketRequestError(
+      if (error instanceof ExternalWebSocketRequestError) throw error; // Re-throw known errors
+      throw new ExternalWebSocketRequestError(
         `Unknown error while subscribing to a WebSocket channel: ${error}`,
         { cause: error }
       );
@@ -305,25 +284,31 @@ export class WebSocketTransport
    */
   ready(signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
-      const combinedSignal = signal
-        ? AbortSignal.any([this.socket.reconnectAbortController.signal, signal])
-        : this.socket.reconnectAbortController.signal;
+      // Handle ReconnectingWebSocket case
+      const reconnectSignal =
+        this.socket instanceof ReconnectingWebSocket
+          ? this.socket.reconnectAbortController.signal
+          : undefined;
 
-      if (combinedSignal.aborted) return reject(combinedSignal.reason);
-      if (this.socket.readyState === ReconnectingWebSocket.OPEN)
-        return resolve();
+      const combinedSignal =
+        signal && reconnectSignal
+          ? AbortSignal.any([reconnectSignal, signal])
+          : signal ?? reconnectSignal;
+
+      if (combinedSignal?.aborted) return reject(combinedSignal.reason);
+      if (this.socket.readyState === WebSocket.OPEN) return resolve();
 
       const handleOpen = () => {
-        combinedSignal.removeEventListener("abort", handleAbort);
+        combinedSignal?.removeEventListener("abort", handleAbort);
         resolve();
       };
       const handleAbort = () => {
         this.socket.removeEventListener("open", handleOpen);
-        reject(combinedSignal.reason);
+        reject(combinedSignal?.reason);
       };
 
       this.socket.addEventListener("open", handleOpen, { once: true });
-      combinedSignal.addEventListener("abort", handleAbort, { once: true });
+      combinedSignal?.addEventListener("abort", handleAbort, { once: true });
     });
   }
 
@@ -335,8 +320,7 @@ export class WebSocketTransport
   close(signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) return reject(signal.reason);
-      if (this.socket.readyState === ReconnectingWebSocket.CLOSED)
-        return resolve();
+      if (this.socket.readyState === WebSocket.CLOSED) return resolve();
 
       const handleClose = () => {
         signal?.removeEventListener("abort", handleAbort);
@@ -360,7 +344,7 @@ export class WebSocketTransport
 
     const tick = async () => {
       if (
-        this.socket.readyState !== ReconnectingWebSocket.OPEN ||
+        this.socket.readyState !== WebSocket.OPEN ||
         !this._keepAliveTimeout ||
         this.keepAlive.interval === null
       )
@@ -381,7 +365,7 @@ export class WebSocketTransport
 
       // Schedule the next ping
       if (
-        this.socket.readyState === ReconnectingWebSocket.OPEN &&
+        this.socket.readyState === WebSocket.OPEN &&
         this._keepAliveTimeout &&
         this.keepAlive.interval !== null
       ) {
@@ -394,6 +378,7 @@ export class WebSocketTransport
 
     this._keepAliveTimeout = setTimeout(tick, this.keepAlive.interval);
   }
+
   protected _keepAliveStop(): void {
     if (this._keepAliveTimeout !== null) {
       clearTimeout(this._keepAliveTimeout);
@@ -413,10 +398,12 @@ export class WebSocketTransport
       }
     }
   }
+
   protected _resubscribeStop(): void {
     if (
       !this.autoResubscribe ||
-      this.socket.reconnectAbortController.signal.aborted
+      (this.socket instanceof ReconnectingWebSocket &&
+        this.socket.reconnectAbortController.signal.aborted)
     ) {
       for (const subscriptionInfo of this._subscriptions.values()) {
         for (const [_, unsubscribe] of subscriptionInfo.listeners) {
@@ -424,6 +411,40 @@ export class WebSocketTransport
         }
       }
     }
+  }
+
+  /** Create a wrapper for regular WebSocket to make it compatible with ReconnectingWebSocket interface */
+  protected _createWebSocketWrapper(socket: WebSocket): ReconnectingWebSocket {
+    // Create a minimal ReconnectingWebSocket-like wrapper
+    const wrapper = Object.create(ReconnectingWebSocket.prototype);
+
+    // Copy all WebSocket properties and methods
+    Object.setPrototypeOf(wrapper, socket);
+
+    // Add ReconnectingWebSocket-specific properties that might be needed
+    wrapper.reconnectAbortController = new AbortController();
+    wrapper.reconnectOptions = {};
+
+    // Forward all WebSocket properties
+    wrapper.url = socket.url;
+    wrapper.readyState = socket.readyState;
+    wrapper.bufferedAmount = socket.bufferedAmount;
+    wrapper.extensions = socket.extensions;
+    wrapper.protocol = socket.protocol;
+    wrapper.binaryType = socket.binaryType;
+    wrapper.onclose = socket.onclose;
+    wrapper.onerror = socket.onerror;
+    wrapper.onmessage = socket.onmessage;
+    wrapper.onopen = socket.onopen;
+
+    // Forward methods
+    wrapper.send = socket.send.bind(socket);
+    wrapper.close = socket.close.bind(socket);
+    wrapper.addEventListener = socket.addEventListener.bind(socket);
+    wrapper.removeEventListener = socket.removeEventListener.bind(socket);
+    wrapper.dispatchEvent = socket.dispatchEvent.bind(socket);
+
+    return wrapper;
   }
 
   async dispose(): Promise<void> {

@@ -43,7 +43,7 @@ deno add jsr:@nktkas/hyperliquid
 
 ```html
 <script type="module">
-    import * as hl from "https://esm.sh/jsr/@nktkas/hyperliquid";
+  import * as hl from "https://esm.sh/jsr/@nktkas/hyperliquid";
 </script>
 ```
 
@@ -60,36 +60,36 @@ deno add jsr:@nktkas/hyperliquid
 import { Event, EventTarget } from "event-target-shim";
 
 if (!globalThis.EventTarget || !globalThis.Event) {
-    globalThis.EventTarget = EventTarget;
-    globalThis.Event = Event;
+  globalThis.EventTarget = EventTarget;
+  globalThis.Event = Event;
 }
 
 if (!globalThis.CustomEvent) {
-    globalThis.CustomEvent = function (type, params) {
-        params = params || {};
-        const event = new Event(type, params);
-        event.detail = params.detail || null;
-        return event;
-    };
+  globalThis.CustomEvent = function (type, params) {
+    params = params || {};
+    const event = new Event(type, params);
+    event.detail = params.detail || null;
+    return event;
+  };
 }
 
 if (!AbortSignal.timeout) {
-    AbortSignal.timeout = function (delay) {
-        const controller = new AbortController();
-        setTimeout(() => controller.abort(), delay);
-        return controller.signal;
-    };
+  AbortSignal.timeout = function (delay) {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), delay);
+    return controller.signal;
+  };
 }
 
 if (!Promise.withResolvers) {
-    Promise.withResolvers = function () {
-        let resolve, reject;
-        const promise = new Promise((res, rej) => {
-            resolve = res;
-            reject = rej;
-        });
-        return { promise, resolve, reject };
-    };
+  Promise.withResolvers = function () {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
 }
 ```
 
@@ -105,7 +105,7 @@ import * as hl from "@nktkas/hyperliquid";
 
 // 1. Set up client with transport
 const infoClient = new hl.InfoClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
 });
 
 // 3. Query data
@@ -120,25 +120,27 @@ import * as hl from "@nktkas/hyperliquid";
 
 // 2. Set up client with wallet and transport
 const exchClient = new hl.ExchangeClient({
-    wallet: "0x...", // `viem`, `ethers`, or private key directly
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  wallet: "0x...", // `viem`, `ethers`, or private key directly
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
 });
 
 // 3. Execute an action
 const result = await exchClient.order({
-    orders: [{
-        a: 0,
-        b: true,
-        p: "30000",
-        s: "0.1",
-        r: false,
-        t: {
-            limit: {
-                tif: "Gtc",
-            },
+  orders: [
+    {
+      a: 0,
+      b: true,
+      p: "30000",
+      s: "0.1",
+      r: false,
+      t: {
+        limit: {
+          tif: "Gtc",
         },
-    }],
-    grouping: "na",
+      },
+    },
+  ],
+  grouping: "na",
 });
 ```
 
@@ -150,12 +152,12 @@ import * as hl from "@nktkas/hyperliquid";
 
 // 2. Set up client with transport
 const subsClient = new hl.SubscriptionClient({
-    transport: new hl.WebSocketTransport(),
+  transport: new hl.WebSocketTransport(),
 });
 
 // 3. Subscribe to events
 const sub = await subsClient.allMids((event) => {
-    console.log(event);
+  console.log(event);
 });
 await sub.unsubscribe();
 ```
@@ -168,11 +170,11 @@ import * as hl from "@nktkas/hyperliquid";
 
 // 2. Set up client with transport, multi-sign address, and signers
 const multiSignClient = new hl.MultiSignClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
-    multiSignAddress: "0x...",
-    signers: [
-        "0x...", // `viem`, `ethers`, or private key directly
-    ],
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  multiSignAddress: "0x...",
+  signers: [
+    "0x...", // `viem`, `ethers`, or private key directly
+  ],
 });
 
 // 3. Execute an action
@@ -205,7 +207,7 @@ Next, initialize a client with the transport layer (more details in the [API Ref
 import * as hl from "@nktkas/hyperliquid";
 
 const infoClient = new hl.InfoClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
 });
 ```
 
@@ -221,20 +223,37 @@ const transport = new hl.HttpTransport(); // or `WebSocketTransport`
 
 // 1. Using private key directly
 const privateKey = "0x...";
-const exchClient_privateKey = new hl.ExchangeClient({ wallet: privateKey, transport });
+const exchClient_privateKey = new hl.ExchangeClient({
+  wallet: privateKey,
+  transport,
+});
 
 // 2. Using Viem
 const viemAccount = privateKeyToAccount("0x...");
-const exchClient_viem = new hl.ExchangeClient({ wallet: viemAccount, transport });
+const exchClient_viem = new hl.ExchangeClient({
+  wallet: viemAccount,
+  transport,
+});
 
 // 3. Using Ethers (V5 or V6)
 const ethersWallet = new ethers.Wallet("0x...");
-const exchClient_ethers = new hl.ExchangeClient({ wallet: ethersWallet, transport });
+const exchClient_ethers = new hl.ExchangeClient({
+  wallet: ethersWallet,
+  transport,
+});
 
 // 4. Using external wallet (e.g. MetaMask) via Viem
-const [account] = await window.ethereum.request({ method: "eth_requestAccounts" });
-const externalWallet = createWalletClient({ account, transport: custom(window.ethereum) });
-const exchClient_viemMetamask = new hl.ExchangeClient({ wallet: externalWallet, transport });
+const [account] = await window.ethereum.request({
+  method: "eth_requestAccounts",
+});
+const externalWallet = createWalletClient({
+  account,
+  transport: custom(window.ethereum),
+});
+const exchClient_viemMetamask = new hl.ExchangeClient({
+  wallet: externalWallet,
+  transport,
+});
 ```
 
 #### Create [SubscriptionClient](#subscriptionclient)
@@ -243,7 +262,7 @@ const exchClient_viemMetamask = new hl.ExchangeClient({ wallet: externalWallet, 
 import * as hl from "@nktkas/hyperliquid";
 
 const subsClient = new hl.SubscriptionClient({
-    transport: new hl.WebSocketTransport(),
+  transport: new hl.WebSocketTransport(),
 });
 ```
 
@@ -255,34 +274,35 @@ import { privateKeyToAccount } from "viem/accounts";
 import { ethers } from "ethers";
 
 const multiSignClient = new hl.MultiSignClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
-    multiSignAddress: "0x...",
-    signers: [
-        privateKeyToAccount("0x..."), // first is leader for multi-sign transaction (signs transaction 2 times)
-        new ethers.Wallet("0x..."),
-        { // can be a custom async wallet
-            async signTypedData(params: {
-                domain: {
-                    name: string;
-                    version: string;
-                    chainId: number;
-                    verifyingContract: `0x${string}`;
-                };
-                types: {
-                    [key: string]: {
-                        name: string;
-                        type: string;
-                    }[];
-                };
-                primaryType: string;
-                message: Record<string, unknown>;
-            }): Promise<`0x${string}`> {
-                // Custom signer logic
-                return "0x..."; // return hex signature
-            },
-        },
-        "0x...", // private key directly
-    ],
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  multiSignAddress: "0x...",
+  signers: [
+    privateKeyToAccount("0x..."), // first is leader for multi-sign transaction (signs transaction 2 times)
+    new ethers.Wallet("0x..."),
+    {
+      // can be a custom async wallet
+      async signTypedData(params: {
+        domain: {
+          name: string;
+          version: string;
+          chainId: number;
+          verifyingContract: `0x${string}`;
+        };
+        types: {
+          [key: string]: {
+            name: string;
+            type: string;
+          }[];
+        };
+        primaryType: string;
+        message: Record<string, unknown>;
+      }): Promise<`0x${string}`> {
+        // Custom signer logic
+        return "0x..."; // return hex signature
+      },
+    },
+    "0x...", // private key directly
+  ],
 });
 ```
 
@@ -296,14 +316,16 @@ Finally, use client methods to interact with the Hyperliquid API (more details i
 import * as hl from "@nktkas/hyperliquid";
 
 const infoClient = new hl.InfoClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
 });
 
 // L2 Book
 const l2Book = await infoClient.l2Book({ coin: "BTC" });
 
 // Account clearinghouse state
-const clearinghouseState = await infoClient.clearinghouseState({ user: "0x..." });
+const clearinghouseState = await infoClient.clearinghouseState({
+  user: "0x...",
+});
 
 // Open orders
 const openOrders = await infoClient.openOrders({ user: "0x..." });
@@ -315,32 +337,37 @@ const openOrders = await infoClient.openOrders({ user: "0x..." });
 import * as hl from "@nktkas/hyperliquid";
 
 const exchClient = new hl.ExchangeClient({
-    wallet: "0x...", // `viem`, `ethers`, or private key directly
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  wallet: "0x...", // `viem`, `ethers`, or private key directly
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
 });
 
 // Place an orders
 const result = await exchClient.order({
-    orders: [{
-        a: 0,
-        b: true,
-        p: "30000",
-        s: "0.1",
-        r: false,
-        t: {
-            limit: {
-                tif: "Gtc",
-            },
+  orders: [
+    {
+      a: 0,
+      b: true,
+      p: "30000",
+      s: "0.1",
+      r: false,
+      t: {
+        limit: {
+          tif: "Gtc",
         },
-    }],
-    grouping: "na",
+      },
+    },
+  ],
+  grouping: "na",
 });
 
 // Approve an agent
 const result = await exchClient.approveAgent({ agentAddress: "0x..." });
 
 // Withdraw funds
-const result = await exchClient.withdraw3({ destination: "0x...", amount: "100" });
+const result = await exchClient.withdraw3({
+  destination: "0x...",
+  amount: "100",
+});
 ```
 
 #### Example of using a [SubscriptionClient](#subscriptionclient)
@@ -349,22 +376,22 @@ const result = await exchClient.withdraw3({ destination: "0x...", amount: "100" 
 import * as hl from "@nktkas/hyperliquid";
 
 const subsClient = new hl.SubscriptionClient({
-    transport: new hl.WebSocketTransport(),
+  transport: new hl.WebSocketTransport(),
 });
 
 // L2 Book updates
 await subsClient.l2Book({ coin: "BTC" }, (data) => {
-    console.log(data);
+  console.log(data);
 });
 
 // User fills
 await subsClient.userFills({ user: "0x..." }, (data) => {
-    console.log(data);
+  console.log(data);
 });
 
 // Candle updates
 await subsClient.candle({ coin: "BTC", interval: "1h" }, (data) => {
-    console.log(data);
+  console.log(data);
 });
 ```
 
@@ -374,11 +401,11 @@ await subsClient.candle({ coin: "BTC", interval: "1h" }, (data) => {
 import * as hl from "@nktkas/hyperliquid";
 
 const multiSignClient = new hl.MultiSignClient({
-    transport: new hl.HttpTransport(), // or `WebSocketTransport`
-    multiSignAddress: "0x...",
-    signers: [
-        "0x...", // `viem`, `ethers`, or private key directly
-    ],
+  transport: new hl.HttpTransport(), // or `WebSocketTransport`
+  multiSignAddress: "0x...",
+  signers: [
+    "0x...", // `viem`, `ethers`, or private key directly
+  ],
 });
 
 // Interaction is the same as with `ExchangeClient`
@@ -394,79 +421,97 @@ A client is an interface through which you can interact with the Hyperliquid API
 
 ```ts
 class InfoClient {
-    constructor(args: {
-        transport: HttpTransport | WebSocketTransport;
-    });
+  constructor(args: { transport: HttpTransport | WebSocketTransport });
 
-    // Market
-    allMids(): Promise<AllMids>;
-    candleSnapshot(args: CandleSnapshotParameters): Promise<Candle[]>;
-    fundingHistory(args: FundingHistoryParameters): Promise<FundingHistory[]>;
-    l2Book(args: L2BookParameters): Promise<Book>;
-    liquidatable(): Promise<unknown[]>;
-    marginTable(args: MarginTableParameters): Promise<MarginTable>;
-    maxMarketOrderNtls(): Promise<[number, string][]>;
-    meta(): Promise<PerpsMeta>;
-    metaAndAssetCtxs(): Promise<PerpsMetaAndAssetCtxs>;
-    perpDeployAuctionStatus(): Promise<DeployAuctionStatus>;
-    perpDexs(): Promise<(PerpDex | null)[]>;
-    perpsAtOpenInterestCap(): Promise<string[]>;
-    predictedFundings(): Promise<PredictedFunding[]>;
-    spotDeployState(args: SpotDeployStateParameters): Promise<SpotDeployState>;
-    spotMeta(): Promise<SpotMeta>;
-    spotMetaAndAssetCtxs(): Promise<SpotMetaAndAssetCtxs>;
-    tokenDetails(args: TokenDetailsParameters): Promise<TokenDetails>;
+  // Market
+  allMids(): Promise<AllMids>;
+  candleSnapshot(args: CandleSnapshotParameters): Promise<Candle[]>;
+  fundingHistory(args: FundingHistoryParameters): Promise<FundingHistory[]>;
+  l2Book(args: L2BookParameters): Promise<Book>;
+  liquidatable(): Promise<unknown[]>;
+  marginTable(args: MarginTableParameters): Promise<MarginTable>;
+  maxMarketOrderNtls(): Promise<[number, string][]>;
+  meta(): Promise<PerpsMeta>;
+  metaAndAssetCtxs(): Promise<PerpsMetaAndAssetCtxs>;
+  perpDeployAuctionStatus(): Promise<DeployAuctionStatus>;
+  perpDexs(): Promise<(PerpDex | null)[]>;
+  perpsAtOpenInterestCap(): Promise<string[]>;
+  predictedFundings(): Promise<PredictedFunding[]>;
+  spotDeployState(args: SpotDeployStateParameters): Promise<SpotDeployState>;
+  spotMeta(): Promise<SpotMeta>;
+  spotMetaAndAssetCtxs(): Promise<SpotMetaAndAssetCtxs>;
+  tokenDetails(args: TokenDetailsParameters): Promise<TokenDetails>;
 
-    // Account
-    clearinghouseState(args: ClearinghouseStateParameters): Promise<PerpsClearinghouseState>;
-    extraAgents(args: ExtraAgentsParameters): Promise<ExtraAgent[]>;
-    isVip(args: IsVipParameters): Promise<boolean>;
-    legalCheck(args: LegalCheckParameters): Promise<LegalCheck>;
-    maxBuilderFee(args: MaxBuilderFeeParameters): Promise<number>;
-    portfolio(args: PortfolioParameters): Promise<PortfolioPeriods>;
-    preTransferCheck(args: PreTransferCheckParameters): Promise<PreTransferCheck>;
-    referral(args: ReferralParameters): Promise<Referral>;
-    spotClearinghouseState(args: SpotClearinghouseStateParameters): Promise<SpotClearinghouseState>;
-    subAccounts(args: SubAccountsParameters): Promise<SubAccount[] | null>;
-    userFees(args: UserFeesParameters): Promise<UserFees>;
-    userFunding(args: UserFundingParameters): Promise<UserFundingUpdate[]>;
-    userNonFundingLedgerUpdates(args: UserNonFundingLedgerUpdatesParameters): Promise<UserNonFundingLedgerUpdate[]>;
-    userRateLimit(args: UserRateLimitParameters): Promise<UserRateLimit>;
-    userRole(args: UserRoleParameters): Promise<UserRole>;
-    userToMultiSigSigners(args: UserToMultiSigSignersParameters): Promise<MultiSigSigners | null>;
+  // Account
+  clearinghouseState(
+    args: ClearinghouseStateParameters
+  ): Promise<PerpsClearinghouseState>;
+  extraAgents(args: ExtraAgentsParameters): Promise<ExtraAgent[]>;
+  isVip(args: IsVipParameters): Promise<boolean>;
+  legalCheck(args: LegalCheckParameters): Promise<LegalCheck>;
+  maxBuilderFee(args: MaxBuilderFeeParameters): Promise<number>;
+  portfolio(args: PortfolioParameters): Promise<PortfolioPeriods>;
+  preTransferCheck(args: PreTransferCheckParameters): Promise<PreTransferCheck>;
+  referral(args: ReferralParameters): Promise<Referral>;
+  spotClearinghouseState(
+    args: SpotClearinghouseStateParameters
+  ): Promise<SpotClearinghouseState>;
+  subAccounts(args: SubAccountsParameters): Promise<SubAccount[] | null>;
+  userFees(args: UserFeesParameters): Promise<UserFees>;
+  userFunding(args: UserFundingParameters): Promise<UserFundingUpdate[]>;
+  userNonFundingLedgerUpdates(
+    args: UserNonFundingLedgerUpdatesParameters
+  ): Promise<UserNonFundingLedgerUpdate[]>;
+  userRateLimit(args: UserRateLimitParameters): Promise<UserRateLimit>;
+  userRole(args: UserRoleParameters): Promise<UserRole>;
+  userToMultiSigSigners(
+    args: UserToMultiSigSignersParameters
+  ): Promise<MultiSigSigners | null>;
 
-    // Order
-    frontendOpenOrders(args: FrontendOpenOrdersParameters): Promise<FrontendOrder[]>;
-    historicalOrders(args: HistoricalOrdersParameters): Promise<OrderStatus<FrontendOrder>[]>;
-    openOrders(args: OpenOrdersParameters): Promise<Order[]>;
-    orderStatus(args: OrderStatusParameters): Promise<OrderLookup>;
-    twapHistory(args: TwapHistoryParameters): Promise<TwapHistory[]>;
-    userFills(args: UserFillsParameters): Promise<Fill[]>;
-    userFillsByTime(args: UserFillsByTimeParameters): Promise<Fill[]>;
-    userTwapSliceFills(args: UserTwapSliceFillsParameters): Promise<TwapSliceFill[]>;
-    userTwapSliceFillsByTime(args: UserTwapSliceFillsByTimeParameters): Promise<TwapSliceFill[]>;
+  // Order
+  frontendOpenOrders(
+    args: FrontendOpenOrdersParameters
+  ): Promise<FrontendOrder[]>;
+  historicalOrders(
+    args: HistoricalOrdersParameters
+  ): Promise<OrderStatus<FrontendOrder>[]>;
+  openOrders(args: OpenOrdersParameters): Promise<Order[]>;
+  orderStatus(args: OrderStatusParameters): Promise<OrderLookup>;
+  twapHistory(args: TwapHistoryParameters): Promise<TwapHistory[]>;
+  userFills(args: UserFillsParameters): Promise<Fill[]>;
+  userFillsByTime(args: UserFillsByTimeParameters): Promise<Fill[]>;
+  userTwapSliceFills(
+    args: UserTwapSliceFillsParameters
+  ): Promise<TwapSliceFill[]>;
+  userTwapSliceFillsByTime(
+    args: UserTwapSliceFillsByTimeParameters
+  ): Promise<TwapSliceFill[]>;
 
-    // Validator
-    delegations(args: DelegationsParameters): Promise<Delegation[]>;
-    delegatorHistory(args: DelegatorHistoryParameters): Promise<DelegatorUpdate[]>;
-    delegatorRewards(args: DelegatorRewardsParameters): Promise<DelegatorReward[]>;
-    delegatorSummary(args: DelegatorSummaryParameters): Promise<DelegatorSummary>;
-    validatorL1Votes(): Promise<unknown[]>;
-    validatorSummaries(): Promise<ValidatorSummary[]>;
+  // Validator
+  delegations(args: DelegationsParameters): Promise<Delegation[]>;
+  delegatorHistory(
+    args: DelegatorHistoryParameters
+  ): Promise<DelegatorUpdate[]>;
+  delegatorRewards(
+    args: DelegatorRewardsParameters
+  ): Promise<DelegatorReward[]>;
+  delegatorSummary(args: DelegatorSummaryParameters): Promise<DelegatorSummary>;
+  validatorL1Votes(): Promise<unknown[]>;
+  validatorSummaries(): Promise<ValidatorSummary[]>;
 
-    // Vault
-    leadingVaults(args: LeadingVaultsParameters): Promise<VaultLeading[]>;
-    userVaultEquities(args: UserVaultEquitiesParameters): Promise<VaultEquity[]>;
-    vaultDetails(args: VaultDetailsParameters): Promise<VaultDetails | null>;
-    vaultSummaries(): Promise<VaultSummary[]>;
+  // Vault
+  leadingVaults(args: LeadingVaultsParameters): Promise<VaultLeading[]>;
+  userVaultEquities(args: UserVaultEquitiesParameters): Promise<VaultEquity[]>;
+  vaultDetails(args: VaultDetailsParameters): Promise<VaultDetails | null>;
+  vaultSummaries(): Promise<VaultSummary[]>;
 
-    // Server
-    exchangeStatus(): Promise<ExchangeStatus>;
+  // Server
+  exchangeStatus(): Promise<ExchangeStatus>;
 
-    // Explorer (RPC endpoint)
-    blockDetails(args: BlockDetailsParameters): Promise<BlockDetails>;
-    txDetails(args: TxDetailsParameters): Promise<TxDetails>;
-    userDetails(args: UserDetailsParameters): Promise<TxDetails[]>;
+  // Explorer (RPC endpoint)
+  blockDetails(args: BlockDetailsParameters): Promise<BlockDetails>;
+  txDetails(args: TxDetailsParameters): Promise<TxDetails>;
+  userDetails(args: UserDetailsParameters): Promise<TxDetails[]>;
 }
 ```
 
@@ -474,125 +519,184 @@ class InfoClient {
 
 ```ts
 class ExchangeClient {
-    constructor(args: {
-        transport: HttpTransport | WebSocketTransport;
-        wallet: AbstractWallet; // `viem`, `ethers` (v5 or v6), or private key directly
-        isTestnet?: boolean; // Whether to use testnet (default: false)
-        defaultVaultAddress?: `0x${string}`; // Vault address used by default if not provided in method call
-        signatureChainId?: `0x${string}` | (() => MaybePromise<`0x${string}`>); // Chain ID used for signing (default: get chain id from wallet otherwise `0x1`)
-        nonceManager?: () => MaybePromise<number>; // Function to get the next nonce (default: monotonically incrementing `Date.now()`)
-    });
+  constructor(args: {
+    transport: HttpTransport | WebSocketTransport;
+    wallet: AbstractWallet; // `viem`, `ethers` (v5 or v6), or private key directly
+    isTestnet?: boolean; // Whether to use testnet (default: false)
+    defaultVaultAddress?: `0x${string}`; // Vault address used by default if not provided in method call
+    signatureChainId?: `0x${string}` | (() => MaybePromise<`0x${string}`>); // Chain ID used for signing (default: get chain id from wallet otherwise `0x1`)
+    nonceManager?: () => MaybePromise<number>; // Function to get the next nonce (default: monotonically incrementing `Date.now()`)
+  });
 
-    // Order
-    batchModify(args: BatchModifyParameters): Promise<OrderResponseSuccess>;
-    cancel(args: CancelParameters): Promise<CancelResponseSuccess>;
-    cancelByCloid(args: CancelByCloidParameters): Promise<CancelResponseSuccess>;
-    modify(args: ModifyParameters): Promise<SuccessResponse>;
-    order(args: OrderParameters): Promise<OrderResponseSuccess>;
-    scheduleCancel(args?: ScheduleCancelParameters): Promise<SuccessResponse>;
-    twapCancel(args: TwapCancelParameters): Promise<TwapCancelResponseSuccess>;
-    twapOrder(args: TwapOrderParameters): Promise<TwapOrderResponseSuccess>;
-    updateIsolatedMargin(args: UpdateIsolatedMarginParameters): Promise<SuccessResponse>;
-    updateLeverage(args: UpdateLeverageParameters): Promise<SuccessResponse>;
+  // Order
+  batchModify(args: BatchModifyParameters): Promise<OrderResponseSuccess>;
+  cancel(args: CancelParameters): Promise<CancelResponseSuccess>;
+  cancelByCloid(args: CancelByCloidParameters): Promise<CancelResponseSuccess>;
+  modify(args: ModifyParameters): Promise<SuccessResponse>;
+  order(args: OrderParameters): Promise<OrderResponseSuccess>;
+  scheduleCancel(args?: ScheduleCancelParameters): Promise<SuccessResponse>;
+  twapCancel(args: TwapCancelParameters): Promise<TwapCancelResponseSuccess>;
+  twapOrder(args: TwapOrderParameters): Promise<TwapOrderResponseSuccess>;
+  updateIsolatedMargin(
+    args: UpdateIsolatedMarginParameters
+  ): Promise<SuccessResponse>;
+  updateLeverage(args: UpdateLeverageParameters): Promise<SuccessResponse>;
 
-    // Account
-    approveAgent(args: ApproveAgentParameters): Promise<SuccessResponse>;
-    approveBuilderFee(args: ApproveBuilderFeeParameters): Promise<SuccessResponse>;
-    claimRewards(): Promise<SuccessResponse>;
-    createSubAccount(args: CreateSubAccountParameters): Promise<CreateSubAccountResponse>;
-    evmUserModify(args: EvmUserModifyParameters): Promise<SuccessResponse>;
-    registerReferrer(args: RegisterReferrerParameters): Promise<SuccessResponse>;
-    reserveRequestWeight(args: ReserveRequestWeightParameters): Promise<SuccessResponse>;
-    setDisplayName(args: SetDisplayNameParameters): Promise<SuccessResponse>;
-    setReferrer(args: SetReferrerParameters): Promise<SuccessResponse>;
-    subAccountModify(args: SubAccountModifyParameters): Promise<SuccessResponse>;
-    spotUser(args: SpotUserParameters): Promise<SuccessResponse>;
+  // Account
+  approveAgent(args: ApproveAgentParameters): Promise<SuccessResponse>;
+  approveBuilderFee(
+    args: ApproveBuilderFeeParameters
+  ): Promise<SuccessResponse>;
+  claimRewards(): Promise<SuccessResponse>;
+  createSubAccount(
+    args: CreateSubAccountParameters
+  ): Promise<CreateSubAccountResponse>;
+  evmUserModify(args: EvmUserModifyParameters): Promise<SuccessResponse>;
+  registerReferrer(args: RegisterReferrerParameters): Promise<SuccessResponse>;
+  reserveRequestWeight(
+    args: ReserveRequestWeightParameters
+  ): Promise<SuccessResponse>;
+  setDisplayName(args: SetDisplayNameParameters): Promise<SuccessResponse>;
+  setReferrer(args: SetReferrerParameters): Promise<SuccessResponse>;
+  subAccountModify(args: SubAccountModifyParameters): Promise<SuccessResponse>;
+  spotUser(args: SpotUserParameters): Promise<SuccessResponse>;
 
-    // Transfer
-    spotSend(args: SpotSendParameters): Promise<SuccessResponse>;
-    subAccountSpotTransfer(args: SubAccountSpotTransferParameters): Promise<SuccessResponse>;
-    subAccountTransfer(args: SubAccountTransferParameters): Promise<SuccessResponse>;
-    usdClassTransfer(args: UsdClassTransferParameters): Promise<SuccessResponse>;
-    usdSend(args: UsdSendParameters): Promise<SuccessResponse>;
-    withdraw3(args: Withdraw3Parameters): Promise<SuccessResponse>;
+  // Transfer
+  spotSend(args: SpotSendParameters): Promise<SuccessResponse>;
+  subAccountSpotTransfer(
+    args: SubAccountSpotTransferParameters
+  ): Promise<SuccessResponse>;
+  subAccountTransfer(
+    args: SubAccountTransferParameters
+  ): Promise<SuccessResponse>;
+  usdClassTransfer(args: UsdClassTransferParameters): Promise<SuccessResponse>;
+  usdSend(args: UsdSendParameters): Promise<SuccessResponse>;
+  withdraw3(args: Withdraw3Parameters): Promise<SuccessResponse>;
 
-    // Staking
-    cDeposit(args: CDepositParameters): Promise<SuccessResponse>;
-    cWithdraw(args: CWithdrawParameters): Promise<SuccessResponse>;
-    tokenDelegate(args: TokenDelegateParameters): Promise<SuccessResponse>;
+  // Staking
+  cDeposit(args: CDepositParameters): Promise<SuccessResponse>;
+  cWithdraw(args: CWithdrawParameters): Promise<SuccessResponse>;
+  tokenDelegate(args: TokenDelegateParameters): Promise<SuccessResponse>;
 
-    // Market
-    perpDeploy(args: PerpDeployParameters): Promise<SuccessResponse>;
-    spotDeploy(args: SpotDeployParameters): Promise<SuccessResponse>;
+  // Market
+  perpDeploy(args: PerpDeployParameters): Promise<SuccessResponse>;
+  spotDeploy(args: SpotDeployParameters): Promise<SuccessResponse>;
 
-    // Vault
-    createVault(args: CreateVaultParameters): Promise<CreateVaultResponse>;
-    vaultDistribute(args: VaultDistributeParameters): Promise<SuccessResponse>;
-    vaultModify(args: VaultModifyParameters): Promise<SuccessResponse>;
-    vaultTransfer(args: VaultTransferParameters): Promise<SuccessResponse>;
+  // Vault
+  createVault(args: CreateVaultParameters): Promise<CreateVaultResponse>;
+  vaultDistribute(args: VaultDistributeParameters): Promise<SuccessResponse>;
+  vaultModify(args: VaultModifyParameters): Promise<SuccessResponse>;
+  vaultTransfer(args: VaultTransferParameters): Promise<SuccessResponse>;
 
-    // Multi-Sign
-    convertToMultiSigUser(args: ConvertToMultiSigUserParameters): Promise<SuccessResponse>;
-    multiSig(args: MultiSigParameters): Promise<BaseExchangeResponse>;
+  // Multi-Sign
+  convertToMultiSigUser(
+    args: ConvertToMultiSigUserParameters
+  ): Promise<SuccessResponse>;
+  multiSig(args: MultiSigParameters): Promise<BaseExchangeResponse>;
 
-    // Validator
-    cSignerAction(args: CSignerActionParameters): Promise<SuccessResponse>;
-    cValidatorAction(args: CValidatorActionParameters): Promise<SuccessResponse>;
+  // Validator
+  cSignerAction(args: CSignerActionParameters): Promise<SuccessResponse>;
+  cValidatorAction(args: CValidatorActionParameters): Promise<SuccessResponse>;
 }
 ```
 
 #### SubscriptionClient
 
 <!-- deno-fmt-ignore-start -->
+
 ```ts
 class SubscriptionClient {
-    constructor(args: {
-        transport: WebSocketTransport;
-    });
+  constructor(args: { transport: WebSocketTransport });
 
-    // Market
-    activeAssetCtx(args: EventActiveAssetCtxParameters, listener: (data: WsActiveAssetCtx | WsActiveSpotAssetCtx) => void): Promise<Subscription>;
-    activeAssetData(args: EventActiveAssetDataParameters, listener: (data: ActiveAssetData) => void): Promise<Subscription>;
-    allMids(listener: (data: WsAllMids) => void): Promise<Subscription>;
-    bbo(args: EventBboParameters, listener: (data: WsBbo) => void): Promise<Subscription>;
-    candle(args: EventCandleParameters, listener: (data: Candle) => void): Promise<Subscription>;
-    l2Book(args: EventL2BookParameters, listener: (data: Book) => void): Promise<Subscription>;
-    trades(args: EventTradesParameters, listener: (data: WsTrade[]) => void): Promise<Subscription>;
+  // Market
+  activeAssetCtx(
+    args: EventActiveAssetCtxParameters,
+    listener: (data: WsActiveAssetCtx | WsActiveSpotAssetCtx) => void
+  ): Promise<Subscription>;
+  activeAssetData(
+    args: EventActiveAssetDataParameters,
+    listener: (data: ActiveAssetData) => void
+  ): Promise<Subscription>;
+  allMids(listener: (data: WsAllMids) => void): Promise<Subscription>;
+  bbo(
+    args: EventBboParameters,
+    listener: (data: WsBbo) => void
+  ): Promise<Subscription>;
+  candle(
+    args: EventCandleParameters,
+    listener: (data: Candle) => void
+  ): Promise<Subscription>;
+  l2Book(
+    args: EventL2BookParameters,
+    listener: (data: Book) => void
+  ): Promise<Subscription>;
+  trades(
+    args: EventTradesParameters,
+    listener: (data: WsTrade[]) => void
+  ): Promise<Subscription>;
 
-    // Account
-    notification(args: EventNotificationParameters, listener: (data: WsNotification) => void): Promise<Subscription>;
-    userEvents(args: EventUserEventsParameters, listener: (data: WsUserEvent) => void): Promise<Subscription>;
-    userFundings(args: EventUserFundingsParameters, listener: (data: WsUserFundings) => void): Promise<Subscription>;
-    userNonFundingLedgerUpdates(args: EventUserNonFundingLedgerUpdatesParameters, listener: (data: WsUserNonFundingLedgerUpdates) => void): Promise<Subscription>;
-    webData2(args: EventWebData2Parameters, listener: (data: WsWebData2) => void): Promise<Subscription>;
+  // Account
+  notification(
+    args: EventNotificationParameters,
+    listener: (data: WsNotification) => void
+  ): Promise<Subscription>;
+  userEvents(
+    args: EventUserEventsParameters,
+    listener: (data: WsUserEvent) => void
+  ): Promise<Subscription>;
+  userFundings(
+    args: EventUserFundingsParameters,
+    listener: (data: WsUserFundings) => void
+  ): Promise<Subscription>;
+  userNonFundingLedgerUpdates(
+    args: EventUserNonFundingLedgerUpdatesParameters,
+    listener: (data: WsUserNonFundingLedgerUpdates) => void
+  ): Promise<Subscription>;
+  webData2(
+    args: EventWebData2Parameters,
+    listener: (data: WsWebData2) => void
+  ): Promise<Subscription>;
 
-    // Order
-    orderUpdates(args: EventOrderUpdatesParameters, listener: (data: OrderStatus<Order>[]) => void): Promise<Subscription>;
-    userFills(args: EventUserFillsParameters, listener: (data: WsUserFills) => void): Promise<Subscription>;
-    userTwapHistory(args: EventUserTwapHistory, listener: (data: WsUserTwapHistory) => void): Promise<Subscription>;
-    userTwapSliceFills(args: EventUserTwapSliceFills, listener: (data: WsUserTwapSliceFills) => void): Promise<Subscription>;
+  // Order
+  orderUpdates(
+    args: EventOrderUpdatesParameters,
+    listener: (data: OrderStatus<Order>[]) => void
+  ): Promise<Subscription>;
+  userFills(
+    args: EventUserFillsParameters,
+    listener: (data: WsUserFills) => void
+  ): Promise<Subscription>;
+  userTwapHistory(
+    args: EventUserTwapHistory,
+    listener: (data: WsUserTwapHistory) => void
+  ): Promise<Subscription>;
+  userTwapSliceFills(
+    args: EventUserTwapSliceFills,
+    listener: (data: WsUserTwapSliceFills) => void
+  ): Promise<Subscription>;
 
-    // Explorer (RPC endpoint)
-    explorerBlock(listener: (data: WsBlockDetails[]) => void): Promise<Subscription>;
-    explorerTxs(listener: (data: TxDetails[]) => void): Promise<Subscription>;
+  // Explorer (RPC endpoint)
+  explorerBlock(
+    listener: (data: WsBlockDetails[]) => void
+  ): Promise<Subscription>;
+  explorerTxs(listener: (data: TxDetails[]) => void): Promise<Subscription>;
 }
 ```
+
 <!-- deno-fmt-ignore-end -->
 
 #### MultiSignClient
 
 ```ts
 class MultiSignClient extends ExchangeClient {
-    constructor(
-        args:
-            & Omit<ExchangeClientParameters, "wallet"> // instead of `wallet`, you should specify the following parameters:
-            & {
-                multiSignAddress: `0x${string}`;
-                signers: [AbstractWallet, ...AbstractWallet[]];
-            },
-    );
+  constructor(
+    args: Omit<ExchangeClientParameters, "wallet"> & { // instead of `wallet`, you should specify the following parameters:
+      multiSignAddress: `0x${string}`;
+      signers: [AbstractWallet, ...AbstractWallet[]];
+    }
+  );
 
-    // Same methods as `ExchangeClient`
+  // Same methods as `ExchangeClient`
 }
 ```
 
@@ -610,17 +714,22 @@ Transport acts as a layer between class requests and Hyperliquid servers.
 
 ```ts
 class HttpTransport {
-    constructor(options?: {
-        isTestnet?: boolean; // Whether to use testnet url (default: false)
-        timeout?: number; // Request timeout in ms (default: 10_000)
-        server?: { // Custom server URLs
-            mainnet?: { api?: string | URL; rpc?: string | URL };
-            testnet?: { api?: string | URL; rpc?: string | URL };
-        };
-        fetchOptions?: RequestInit; // A custom fetch options
-        onRequest?: (request: Request) => MaybePromise<Request | void | null | undefined>; // A callback before request is sent
-        onResponse?: (response: Response) => MaybePromise<Response | void | null | undefined>; // A callback after response is received
-    });
+  constructor(options?: {
+    isTestnet?: boolean; // Whether to use testnet url (default: false)
+    timeout?: number; // Request timeout in ms (default: 10_000)
+    server?: {
+      // Custom server URLs
+      mainnet?: { api?: string | URL; rpc?: string | URL };
+      testnet?: { api?: string | URL; rpc?: string | URL };
+    };
+    fetchOptions?: RequestInit; // A custom fetch options
+    onRequest?: (
+      request: Request
+    ) => MaybePromise<Request | void | null | undefined>; // A callback before request is sent
+    onResponse?: (
+      response: Response
+    ) => MaybePromise<Response | void | null | undefined>; // A callback after response is received
+  });
 }
 ```
 
@@ -643,24 +752,26 @@ class HttpTransport {
 
 ```ts
 class WebSocketTransport {
-    constructor(options?: {
-        url?: string | URL; // WebSocket URL (default: "wss://api.hyperliquid.xyz/ws")
-        timeout?: number; // Request timeout in ms (default: 10_000)
-        keepAlive?: {
-            interval?: number; // Ping interval in ms (default: 30_000)
-            timeout?: number; // Pong timeout in ms (default: same as `timeout` for requests)
-        };
-        reconnect?: {
-            maxRetries?: number; // Maximum number of reconnection attempts (default: 3)
-            connectionTimeout?: number; // Connection timeout in ms (default: 10_000)
-            connectionDelay?: number | ((attempt: number) => number | Promise<number>); // Delay between reconnection (default: Exponential backoff (max 10s))
-            shouldReconnect?: (event: CloseEvent) => boolean | Promise<boolean>; // Custom reconnection logic (default: Always reconnect)
-            messageBuffer?: MessageBufferStrategy; // Message buffering strategy between reconnection (default: FIFO buffer)
-        };
-        autoResubscribe?: boolean; // Whether to automatically resubscribe to events after reconnection (default: true)
-    });
-    ready(signal?: AbortSignal): Promise<void>;
-    close(signal?: AbortSignal): Promise<void>;
+  constructor(options?: {
+    url?: string | URL; // WebSocket URL (default: "wss://api.hyperliquid.xyz/ws")
+    timeout?: number; // Request timeout in ms (default: 10_000)
+    keepAlive?: {
+      interval?: number; // Ping interval in ms (default: 30_000)
+      timeout?: number; // Pong timeout in ms (default: same as `timeout` for requests)
+    };
+    reconnect?: {
+      maxRetries?: number; // Maximum number of reconnection attempts (default: 3)
+      connectionTimeout?: number; // Connection timeout in ms (default: 10_000)
+      connectionDelay?:
+        | number
+        | ((attempt: number) => number | Promise<number>); // Delay between reconnection (default: Exponential backoff (max 10s))
+      shouldReconnect?: (event: CloseEvent) => boolean | Promise<boolean>; // Custom reconnection logic (default: Always reconnect)
+      messageBuffer?: MessageBufferStrategy; // Message buffering strategy between reconnection (default: FIFO buffer)
+    };
+    autoResubscribe?: boolean; // Whether to automatically resubscribe to events after reconnection (default: true)
+  });
+  ready(signal?: AbortSignal): Promise<void>;
+  close(signal?: AbortSignal): Promise<void>;
 }
 ```
 
@@ -685,10 +796,8 @@ import { actionSorter, signL1Action } from "@nktkas/hyperliquid/signing";
 const privateKey = "0x..."; // `viem`, `ethers`, or private key directly
 
 const action = actionSorter.cancel({
-    type: "cancel",
-    cancels: [
-        { a: 0, o: 12345 },
-    ],
+  type: "cancel",
+  cancels: [{ a: 0, o: 12345 }],
 });
 const nonce = Date.now();
 
@@ -696,9 +805,9 @@ const signature = await signL1Action({ wallet: privateKey, action, nonce });
 
 // Send the signed action to the Hyperliquid API
 const response = await fetch("https://api.hyperliquid.xyz/exchange", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, signature, nonce }), // recommended to send the same formatted action
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ action, signature, nonce }), // recommended to send the same formatted action
 });
 const body = await response.json();
 ```
@@ -706,30 +815,34 @@ const body = await response.json();
 #### Approve agent yourself
 
 ```ts
-import { actionSorter, signUserSignedAction, userSignedActionEip712Types } from "@nktkas/hyperliquid/signing";
+import {
+  actionSorter,
+  signUserSignedAction,
+  userSignedActionEip712Types,
+} from "@nktkas/hyperliquid/signing";
 
 const privateKey = "0x..."; // `viem`, `ethers`, or private key directly
 
 const action = actionSorter.approveAgent({
-    type: "approveAgent",
-    signatureChainId: "0x66eee",
-    hyperliquidChain: "Mainnet",
-    agentAddress: "0x...",
-    agentName: "Agent",
-    nonce: Date.now(),
+  type: "approveAgent",
+  signatureChainId: "0x66eee",
+  hyperliquidChain: "Mainnet",
+  agentAddress: "0x...",
+  agentName: "Agent",
+  nonce: Date.now(),
 });
 
 const signature = await signUserSignedAction({
-    wallet: privateKey,
-    action,
-    types: userSignedActionEip712Types[action.type],
+  wallet: privateKey,
+  action,
+  types: userSignedActionEip712Types[action.type],
 });
 
 // Send the signed action to the Hyperliquid API
 const response = await fetch("https://api.hyperliquid.xyz/exchange", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, signature, nonce: action.nonce }), // recommended to send the same formatted action
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ action, signature, nonce: action.nonce }), // recommended to send the same formatted action
 });
 const body = await response.json();
 ```
